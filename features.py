@@ -37,11 +37,23 @@ class Wrap(Feature):
             return np.concatenate([f(x) for f in self._features])
 
 
+class FeatureFunction(Feature):
+    def __init__(self, n, func):
+        self._length = n 
+        self._func = func 
+
+    def __call__(self, x):
+        ret = np.array(self._func(func))
+        assert(len(ret) == self._length)
+        return ret 
+
+
 class Identity(Feature):
     def __init__(self, n):
         self._length = n
 
     def __call__(self, x):
+        x = np.atleast_1d(x)
         assert(len(x) == self._length)
         return x
 
@@ -55,6 +67,7 @@ class Bias(Feature):
     def __call__(self, x):
         return np.copy(self._array)
 
+
 class Unary2Int(Feature):
     def __init__(self, n, offset=1):
         self._length = 1
@@ -65,6 +78,7 @@ class Unary2Int(Feature):
         assert(x.ndim <= 1)
         assert(np.all((x == 0) | (x == 1)))
         return np.array(self.offset + np.flatnonzero(x == 1))
+
 
 # These don't really work well with states as basis vectors...
 # class Int2Binary(Feature):
@@ -78,14 +92,14 @@ class Unary2Int(Feature):
 #         return (x & self._array) > 0
 
 
-# class Int2Unary(Feature):
-#     def __init__(self, n, offset=0):
-#         self._length = n 
-#         self.offset = offset 
-#         self._array = np.eye(n)
+class Int2Unary(Feature):
+    def __init__(self, n, offset=0):
+        self._length = n 
+        self.offset = offset 
+        self._array = np.eye(n)
 
-#     def __call__(self, x: int):
-#         return self._array[x - self.offset]
+    def __call__(self, x: int):
+        return self._array[x - self.offset]
 
 
 def as_tuple(x):

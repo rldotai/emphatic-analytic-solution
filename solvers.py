@@ -1,7 +1,14 @@
 import numpy as np 
 from mdptools import *
 
-def td_solution(P, R, phi_func, gm_func, lm_func):
+def td_solution(P, R, s0, phi_func, gm_func, lm_func):
+    """
+    The TD-Solution to the MDP defined by `P`, `R`, and `gm_func` starting in
+    state `s0`, under function approximation according to `phi_func` and using 
+    eligibility traces/bootstrapping according to to `lm_func`.
+
+    Assumes the matrix `P` and vector `R` are in canonical form.
+    """
     # TODO: check parameters
     ns = len(P)
     indices = state_indices(P)
@@ -12,7 +19,7 @@ def td_solution(P, R, phi_func, gm_func, lm_func):
     L = np.diag([lm_func(s) for s in states])
     
     # compute intermediate values
-    d = np.ones(ns)                      # placeholder distribution vector
+    d = distribution(P, s0)              # distribution vector
     D = np.diag(d)                       # distribution matrix
     P_trace = pinv(I - mult(P, G, L))    # trace reweighting matrix
     
@@ -20,11 +27,10 @@ def td_solution(P, R, phi_func, gm_func, lm_func):
     b = mult(X.T, D, P_trace, R)
     A = mult(X.T, D, P_trace, (I - np.dot(P, G)), X)
     
-    # astype is hacky, unsure why it's returning objects... type coercion?
     return np.dot(pinv(A), b).astype(np.float)
 
 
-def etd_solution(P, R, phi_func, gm_func, lm_func, i_func):
+def etd_solution(P, R, s0, phi_func, gm_func, lm_func, i_func):
     ns = len(P)
     indices = state_indices(P)
     states = state_vectors(P)
@@ -37,7 +43,7 @@ def etd_solution(P, R, phi_func, gm_func, lm_func, i_func):
     ivec = np.array([i_func(s) for s in states])
 
     # Compute intermediate values
-    d = np.ones(ns)                         # placeholder distribution vector
+    d = distribution(P, s0)                 # distribution vector
     D = np.diag(d)                          # distribution matrix
     d_i = np.dot(D, ivec)                   # interest-weighted distribution 
     P_trace = pinv(I - mult(P, G, L))       # trace reweighting matrix
@@ -50,7 +56,6 @@ def etd_solution(P, R, phi_func, gm_func, lm_func, i_func):
     b = mult(X.T, M, P_trace, R)
     A = mult(X.T, M, P_trace, P_gm, X)
     
-    # astype is hacky, unsure why it's returning objects... type coercion?
     return np.dot(pinv(A), b).astype(np.float) 
 
 
